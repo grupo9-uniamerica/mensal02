@@ -1,0 +1,21 @@
+.env
+antenv
+/antenv
+
+# Ignorar diretórios __pycache__
+__pycache__/
+/__pycache__
+./__pycache__
+
+/app/__pycache__
+
+
+# Ignorar arquivos de log
+*.log
+
+# Ignorar arquivos de configurações de editor
+.vscode/
+.idea/
+
+# Ignorar ambiente virtual
+venv/

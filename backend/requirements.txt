@@ -1,0 +1,10 @@
+flask
+flask-cors
+pandas
+faiss-cpu
+sentence-transformers
+openai
+azure-storage-blob
+python-dotenv
+openpyxl
+xlsxwriter

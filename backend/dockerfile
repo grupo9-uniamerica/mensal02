@@ -1,0 +1,29 @@
+# Usa uma imagem oficial do Python minimalista
+FROM python:3.11.3-slim
+
+# Define um diretório de trabalho
+WORKDIR /app  
+
+# Copia somente os arquivos essenciais primeiro (para melhor uso do cache)
+COPY requirements.txt .
+
+# Instala dependências do sistema necessárias antes de instalar os pacotes Python
+RUN apt-get update && apt-get install -y \
+    libpq-dev gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Instala dependências do projeto
+RUN pip install --no-cache-dir -r requirements.txt  
+
+# Copia os arquivos restantes do projeto
+COPY . .
+
+# Expõe a porta da aplicação
+EXPOSE 8000  
+
+# Define um usuário não-root para segurança
+RUN useradd -m appuser
+USER appuser
+
+# Comando para iniciar a aplicação
+CMD ["python", "main.py"]  
