@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, validator  # Adicionei o validator aqui
 from datetime import datetime
 from typing import List
+from fastapi.middleware.cors import CORSMiddleware
 from models import (
     add_room, add_reservation, 
     get_all_reservations, get_all_rooms,
@@ -11,6 +12,17 @@ from models import (
 app = FastAPI(title="Sistema de Reserva de Salas",
               description="API para gerenciar salas e reservas",
               version="1.0.0")
+
+
+# Configuração de CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Permite o frontend
+    allow_credentials=True,
+    allow_methods=["*"],  # Permite todos os métodos (GET, POST, etc.)
+    allow_headers=["*"],  # Permite todos os headers
+)
+
 
 # Modelos para Salas
 class Room(BaseModel):
