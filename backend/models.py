@@ -16,6 +16,7 @@ def create_tables():
                 name VARCHAR(100) NOT NULL,
                 capacity INT NOT NULL,
                 location VARCHAR(255) NOT NULL,
+                available BOOLEAN NOT NULL DEFAULT TRUE,  # <- Adicionei esta linha
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -61,15 +62,15 @@ def room_exists(room_id):
             cursor.close()
             conn.close()
 
-def add_room(name, capacity, location):
+def add_room(name, capacity, location, available=True):  # Adicione o parâmetro default
     """Adiciona uma nova sala"""
     conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO rooms (name, capacity, location) VALUES (%s, %s, %s)",
-            (name, capacity, location)
+            "INSERT INTO rooms (name, capacity, location, available) VALUES (%s, %s, %s, %s)",  # Adicione o campo
+            (name, capacity, location, available)  # Adicione o valor
         )
         conn.commit()
         return cursor.lastrowid
@@ -181,6 +182,7 @@ def get_all_rooms():
         cursor = conn.cursor(dictionary=True)
         cursor.execute("""
             SELECT id, name, capacity, location, 
+                   COALESCE(available, TRUE) as available,  # Garante que sempre retorne um valor
                    COALESCE(created_at, NOW()) as created_at
             FROM rooms 
             ORDER BY name
@@ -189,6 +191,35 @@ def get_all_rooms():
     except Exception as e:
         print(f"Erro ao buscar salas: {e}")
         raise
+    finally:
+        if conn and conn.is_connected():
+            cursor.close()
+            conn.close()
+
+
+def check_room_availability(room_id: int, start_time: datetime = None, end_time: datetime = None) -> bool:
+    """Verifica se a sala está disponível para reserva"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        if start_time and end_time:
+            # Verifica conflitos em um período específico
+            cursor.execute("""
+                SELECT id FROM reservations 
+                WHERE room_id = %s 
+                AND NOT (%s >= end_time OR %s <= start_time)
+            """, (room_id, end_time, start_time))
+        else:
+            # Verifica se há qualquer reserva para a sala
+            cursor.execute("SELECT id FROM reservations WHERE room_id = %s", (room_id,))
+            
+        return cursor.fetchone() is None
+        
+    except mysql.connector.Error as err:
+        print(f"Erro ao verificar disponibilidade: {err}")
+        return False
     finally:
         if conn and conn.is_connected():
             cursor.close()
