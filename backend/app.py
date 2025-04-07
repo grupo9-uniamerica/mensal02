@@ -2,7 +2,9 @@ from fastapi import FastAPI, HTTPException, Query  # Adicione Query aqui
 from pydantic import BaseModel, validator  # Adicionei o validator aqui
 from datetime import datetime
 from typing import List
+from mysql.connector import Error
 from typing import Optional
+from database import get_db_connection
 from fastapi.middleware.cors import CORSMiddleware
 from models import (
     add_room, 
@@ -176,6 +178,22 @@ async def create_reservation(reservation: ReservationRequest):
 def list_reservations():
     return get_all_reservations()
 
+
+def verify_database_connection():
+    """Verifica se o banco de dados está ativo."""
+    try:
+        # Sua lógica de conexão ao banco
+        connection = get_db_connection()  # Sua função de conexão ao banco
+        if connection:
+            print("Banco de dados conectado com sucesso!")
+        else:
+            print("Banco de dados indisponível. Inicializando backend sem banco.")
+    except Error as e:
+        print(f"Erro ao conectar ao banco de dados: {e}")
+
+
+
 if __name__ == "__main__":
+    verify_database_connection()  # Verifica o banco antes de inicializar o servidor
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
