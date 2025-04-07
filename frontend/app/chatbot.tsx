@@ -1,51 +1,10 @@
 "use client";
 
-import { useRef, useEffect } from "react"; // Adicione useRef e useEffect
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styled from "styled-components";
-import { Send } from "lucide-react";
+import { Calendar, Clock, User, ArrowLeft, Check } from "lucide-react";
 
-const SuggestionsContainer = styled.div`
-  display: flex;
-  flex-direction: column; /* Organiza as sugestões em uma coluna */
-  align-items: flex-end; /* Alinha as sugestões à esquerda */
-  position: absolute; /* Alinha as sugestões dentro da posição relativa do input */
-  bottom: 60px; /* Distância do fundo do input (ajuste conforme necessário) */
-  left: 0; /* Alinha as sugestões à esquerda do container do input */
-  width: 100%; /* Ocupa toda a largura do container */
-  animation: fadeIn 0.4s ease-in-out forwards;
-  
-  @media (max-width: 768px) {
-    font-size: 0.7rem;
-  }
-`;
-
-const SuggestionBubble = styled.div`
-
-  padding: 8px 12px;
-
-  color: white;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: background-color 0.3s, transform 0.2s;
-  margin-bottom: 8px; /* Distância entre as sugestões */
-  background-color: rgba(0, 132, 255, 0.3); /* Use background-color em vez de background */
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-
-
-  &:hover {
-    background-color: #2563eb;
-    transform: scale(1.05);
-  }
-
-  &:active {
-    transform: scale(0.95);
-  }
-`;
-
-
-// Estilos com Styled Components
+// Estilos baseados no exemplo fornecido
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -57,42 +16,39 @@ const Container = styled.div`
   color: #f2ddcc;
 `;
 
-
 const MainContent = styled.div`
   display: flex;
   flex-direction: column;
   flex: 1;
-  overflow: hidden; /* Evita overflow no layout */
+  overflow: hidden;
   height: 100vh;
+  padding: 1rem;
 
   @media (min-width: 768px) {
     padding-left: clamp(20px, 20vw, 600px);
     padding-right: clamp(20px, 20vw, 600px);
   }
-
-  
 `;
 
 const Header = styled.div`
-  padding: 0.3rem;
+  padding: 1.5rem;
   text-align: center;
   font-weight: bold;
-  font-size: 1.0rem;
-
-  @media (min-width: 768px) {
-    padding: 1.5rem;
-    font-size: 1.5rem;
-  }
+  font-size: 1.5rem;
+  background: linear-gradient(90deg, #3182ce, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 1rem;
 `;
 
-const ChatContainer = styled.div`
+const RoomListContainer = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding-left: 1rem;
-  padding-right: 1rem;
-  padding-bottom: 120px; /* Reduz o padding-bottom para telas menores */
-  display: flex;
-  flex-direction: column;
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  padding-bottom: 120px;
 
   &::-webkit-scrollbar {
     width: 5px;
@@ -109,29 +65,90 @@ const ChatContainer = styled.div`
   }
 `;
 
-const Message = styled.div<{ $isUser: boolean }>`
-  max-width: 100%;
-  padding: 12px 16px;
-  border-radius: ${({ $isUser }) => ($isUser ? "12px 12px 0 12px" : "12px 12px 12px 0")};
-  background: ${({ $isUser }) => $isUser && "linear-gradient(135deg, #3182ce, #2563eb)"};
-  color: white;
-  align-self: ${({ $isUser }) => ($isUser ? "flex-end" : "flex-start")};
-  margin-bottom: 12px;
-  transition: transform 0.2s, box-shadow 0.2s;
-  color: #f2ddcc;
-  
-  /* Adicionando animação de fade-in */
-  opacity: 0;
-  animation: fadeIn 0.4s ease-in-out forwards;
+const RoomCard = styled.div<{ $available: boolean }>`
+  background: #171e32;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  opacity: ${({ $available }) => ($available ? 1 : 0.6)};
+  cursor: ${({ $available }) => ($available ? 'pointer' : 'not-allowed')};
 
   &:hover {
-    transform: translateY(-2px);
-    background: linear-gradient(135deg, #0c101c,rgb(18, 24, 41));
+    transform: ${({ $available }) => ($available ? 'translateY(-5px)' : 'none')};
+    box-shadow: ${({ $available }) => ($available ? '0 10px 20px rgba(0, 0, 0, 0.2)' : 'none')};
+    border-color: ${({ $available }) => ($available ? '#3182ce' : 'rgba(255, 255, 255, 0.1)')};
   }
+`;
 
-  @media (max-width: 768px) {
-    font-size: 0.8rem;
+const RoomImage = styled.div`
+  width: 100%;
+  height: 120px;
+  background: linear-gradient(135deg, #3182ce, #7c3aed);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 2rem;
+`;
+
+const RoomTitle = styled.h3`
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+  color: #f2ddcc;
+`;
+
+const RoomMeta = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #a0aec0;
+  margin-bottom: 0.5rem;
+`;
+
+const AvailabilityBadge = styled.span<{ $available: boolean }>`
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: ${({ $available }) => ($available ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)')};
+  color: ${({ $available }) => ($available ? '#10b981' : '#ef4444')};
+`;
+
+const BookButton = styled.button<{ $available: boolean }>`
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 1rem;
+  border-radius: 8px;
+  border: none;
+  background: ${({ $available }) => ($available ? 'linear-gradient(135deg, #3182ce, #2563eb)' : 'rgba(255, 255, 255, 0.05)')};
+  color: ${({ $available }) => ($available ? 'white' : 'rgba(255, 255, 255, 0.3)')};
+  cursor: ${({ $available }) => ($available ? 'pointer' : 'not-allowed')};
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  &:hover {
+    transform: ${({ $available }) => ($available ? 'scale(1.02)' : 'none')};
+    box-shadow: ${({ $available }) => ($available ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none')};
   }
+`;
+
+const FormContainer = styled.div`
+  background: #171e32;
+  border-radius: 12px;
+  padding: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  max-width: 500px;
+  margin: 0 auto;
+  width: 100%;
+  animation: fadeIn 0.4s ease-in-out;
 
   @keyframes fadeIn {
     from {
@@ -143,399 +160,331 @@ const Message = styled.div<{ $isUser: boolean }>`
       transform: translateY(0);
     }
   }
-    
 `;
 
-
-const InputContainer = styled.div`
+const FormHeader = styled.div`
   display: flex;
   align-items: center;
-  padding: 1rem;
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-  box-shadow: 0px 40px 40px 0px rgba(0, 0, 0, 0.2);
-  background-color: #171e32;
-  position: absolute; /* Permite posicionar com relação à tela */
-  bottom: 2%; /* Distância do fundo da tela, ajustável */
-  left: 50%; /* Centraliza horizontalmente */
-  transform: translateX(-50%); /* Ajusta a posição para o centro */
-  width: 40%;
-  border-radius: 25px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-
-  @media (max-width: 768px) { 
-    width: 90%; /* Reduz a largura para telas menores */
-    bottom: 0.1%; /* Distância do fundo da tela, ajustável */
-  }
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 `;
 
+const FormTitle = styled.h2`
+  font-size: 1.5rem;
+  color: #f2ddcc;
+`;
 
-const Input = styled.input`
+const FormGroup = styled.div`
+  margin-bottom: 1.5rem;
+`;
+
+const FormLabel = styled.label`
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #a0aec0;
+  font-size: 0.9rem;
+`;
+
+const FormInput = styled.input`
   width: 100%;
-  padding: 12px 16px;
-  font-size: 16px;
-  border-radius: 20px;
-  outline: none;
-  color: #2d3748;
-  background-color: #101524;
-  border-color: #101524;
+  padding: 0.75rem 1rem;
+  background: #101524;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
   color: #e2e8f0;
-  &::placeholder {
-    color: #718096;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #3182ce;
+    box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.2);
   }
 `;
 
+const FormActions = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+`;
 
-const Button = styled.button`
-  margin-left: 1rem;
-  padding: 0.75rem;
-  background:  #2563eb;
-  cursor: pointer;
+const ActionButton = styled.button<{ $primary?: boolean }>`
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
   border: none;
-  border-radius: 12px;
-  transition: background 0.3s, transform 0.2s;
-  backdrop-filter: blur(5px);
+  background: ${({ $primary }) => ($primary ? 'linear-gradient(135deg, #3182ce, #2563eb)' : 'rgba(255, 255, 255, 0.05)')};
+  color: ${({ $primary }) => ($primary ? 'white' : '#a0aec0')};
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: scale(1.05);
-  }
-
-  &:active {
-    transform: scale(0.95);
+    transform: scale(1.02);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
 `;
 
-const LoadingMessage = styled.div`
-  max-width: 60%;
-  padding: 12px 16px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #1a202c, #2d3748);
-  color: white;
-  align-self: flex-start;
-  margin-bottom: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(8px);
-  animation: colorChange 0.9s infinite alternate, fadeIn 0.5s ease-in-out;
+const LoadingIndicator = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
 
-@keyframes colorChange {
-  0% {
-    background: linear-gradient(135deg, rgb(26, 32, 44), rgb(45, 55, 72));
-  }
-  5% {
-    background: linear-gradient(135deg, rgb(26, 32, 44), rgb(48, 63, 85));
-  }
-  10% {
-    background: linear-gradient(135deg, rgb(26, 32, 44), rgb(51, 70, 97));
-  }
-  15% {
-    background: linear-gradient(135deg, rgb(26, 32, 44), rgb(55, 77, 108));
-  }
-  20% {
-    background: linear-gradient(135deg, rgb(26, 32, 44), rgb(58, 84, 120));
-  }
-  25% {
-    background: linear-gradient(135deg, rgb(26, 32, 44), rgb(61, 91, 132));
-  }
-  30% {
-    background: linear-gradient(135deg, rgb(26, 32, 44), rgb(64, 98, 143));
-  }
-  35% {
-    background: linear-gradient(135deg, rgb(26, 32, 44), rgb(67, 105, 154));
-  }
-  40% {
-    background: linear-gradient(135deg, rgb(26, 32, 44), rgb(72, 112, 166));
-  }
-  45% {
-    background: linear-gradient(135deg, rgb(26, 32, 44), rgb(75, 119, 178));
-  }
-  50% {
-    background: linear-gradient(135deg, rgb(26, 32, 44), rgb(78, 126, 190));
-  }
-  55% {
-    background: linear-gradient(135deg, rgb(26, 32, 44), rgb(81, 133, 201));
-  }
-  60% {
-    background: linear-gradient(135deg, rgb(26, 32, 44), rgb(84, 140, 213));
-  }
-  65% {
-    background: linear-gradient(135deg, rgb(26, 32, 44), rgb(87, 147, 225));
-  }
-  70% {
-    background: linear-gradient(135deg, rgb(26, 32, 44), rgb(92, 154, 237));
-  }
-  75% {
-    background: linear-gradient(135deg, rgb(26, 32, 44), rgb(95, 161, 248));
-  }
-  80% {
-    background: linear-gradient(135deg, rgb(26, 32, 44), rgb(95, 161, 248));
-  }
-  85% {
-    background: linear-gradient(135deg, rgb(26, 32, 44), rgb(95, 161, 248));
-  }
-  90% {
-    background: linear-gradient(135deg, rgb(26, 32, 44), rgb(95, 161, 248));
-  }
-  95% {
-    background: linear-gradient(135deg, rgb(26, 32, 44), rgb(95, 161, 248));
-  }
-  100% {
-    background: linear-gradient(135deg, rgb(26, 32, 44), rgb(95, 161, 248));
-  }
-}
-
-
-
-
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: scale(0.95);
-    }
+  @keyframes spin {
     to {
-      opacity: 1;
-      transform: scale(1);
+      transform: rotate(360deg);
     }
+  }
+
+  svg {
+    animation: spin 1s linear infinite;
+    color: #3182ce;
   }
 `;
 
-
-// Função para formatar a mensagem
-const formatMessage = (message: string) => {
-  // Substituir **texto** por <strong>texto</strong>
-  let formattedMessage = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-
-  // Substituir ### por listas e adicionar <br> antes e depois
-  formattedMessage = formattedMessage.replace(/### (.*?)\n/g, '<br><ul><li>$1</li></ul><br>');
-
-  // Dividir o texto em linhas
-  const lines = formattedMessage.split('\n');
-
-  // Processar cada linha
-  formattedMessage = lines.map((line, index) => {
-    // Verificar se é a penúltima linha
-    if (index === lines.length - 2) {
-      return `<p>${line}</p><br>`; // Adiciona <br> no final da penúltima linha
-    }
-
-    // Adicionar <p> ao redor de outras linhas (exceto títulos e negrito)
-    if (!line.startsWith('<ul>') && !line.startsWith('<strong>') && line.trim() !== '') {
-      return `<p>${line}</p>`;
-    }
-
-    return line;
-  }).join('');
-
-  return formattedMessage;
-};
-
-let firstmessage = true;
-
-function generateuserid() {
-  return 'user-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+interface Room {
+  id: number;
+  name: string;
+  capacity: number;
+  location: string;
+  available: boolean;
+  created_at: string;
 }
 
-const userid = generateuserid();
-console.log(userid);
-// Garantir que o localStorage está acessível antes de usá-lo
-if (typeof window !== "undefined" && window.localStorage) {
-  localStorage.setItem('userid', userid);
+interface ReservationFormData {
+  name: string;
+  startTime: string;
+  endTime: string;
 }
-//  Componente Principal do Chatbot
-export default function Chatbot() {
-  const [messages, setMessages] = useState<{ text: string; isUser: boolean }[]>([
-    { text: "Hello! Before we get started, can you tell me your name or which company you're from?", isUser: false },
-  ]);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [suggestions, setSuggestions] = useState<string[]>([
-    "Summary of Vinicius",
-    "What certifications does Vinicius have?",
-    "About Vinicius",
-    "How old is Vinicius?",
-    "Tell me about graduation of Vinicius?",
-    "What is vinicius's email?",
-    "Which company does Vinicius work for?",
-    "Tell me about experience projects of Vinicius?",
-    "What hard skills does Vinicius have?",
-    "Vinicius' hobbies?",
-    "Vinicius' job role?",
-    "Which languages does Vinicius speak?",
-    "Where does Vinicius live?",
-    "Full name of Vinicius?",
-    "Where is Vinicius from?",
-    "Vinicius' salary expectations?",
-    "Has Vinicius ever worked with data streams?",
-    "Tell me about this chatbot",
-    "Who are you?",
-  ]);
-  
-  const [showSuggestions, setShowSuggestions] = useState(false); // Estado para controlar a exibição das sugestões
-  const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  // Efeito para rolar automaticamente para o final
-  useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
-  }, [messages]);
+export default function StudyRoomScheduler() {
+  const [view, setView] = useState<'list' | 'form'>('list');
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [formData, setFormData] = useState<ReservationFormData>({
+    name: '',
+    startTime: '',
+    endTime: '',
+  });
 
-  const sendMessage = async (message?: string) => {
-    const msg = message || input;
-    if (!msg.trim() || isLoading) return;
-
-    const currentTime = new Date();
-    const formattedTime = currentTime.toISOString();
-
-    const userMessage = { text: msg, isUser: true };
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-
-
-
-    if (firstmessage) {
-      setIsLoading(true);
-      setTimeout(() => {
-        setIsLoading(false);
-        const botMessage = { text: 'Thank you! Now you can start by asking anything about Vini, such as his age, current projects, job, and more! 😊', isUser: false };
-        setMessages((prev) => [...prev, botMessage]);
-        setShowSuggestions(true); // Exibe as sugestões após a primeira mensagem
-      }, 1500);
-      if (typeof window !== "undefined" && window.localStorage) {
-      localStorage.setItem('dtsent', formattedTime);
-      localStorage.setItem('message', msg);
-      localStorage.setItem('flag_fm', "true");
-      localStorage.setItem('input_ai', "");
-      localStorage.setItem('contexto_faiss', "");
-      }
-      firstmessage = false;
-    } else {
-
-      try {
-        setIsLoading(true);
-        setShowSuggestions(false);
-        const response = await fetch('https://privatechatbotia-dpbye3cdbmandchy.brazilsouth-01.azurewebsites.net/perguntar/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ pergunta: msg }),
-        });
-
-        if (!response.ok) throw new Error('Erro ao enviar mensagem');
-
-        const data = await response.json();
-        const botMessage = { text: data.resposta, isUser: false };
-
-        setShowSuggestions(true);
-        console.log(botMessage);
-        if (typeof window !== "undefined" && window.localStorage) {
-        localStorage.setItem('dtsent', formattedTime);
-        localStorage.setItem('message', msg);
-        localStorage.setItem('flag_fm', "false");
-        localStorage.setItem('input_ai', data.resposta);
-        localStorage.setItem('contexto_faiss', data.contexto);
-        }
-        setMessages((prev) => [...prev, botMessage]);
-                      // Se a mensagem do usuário mencionar "LinkedIn", envie a imagem clicável
-      if (msg.toLowerCase().includes("linkedin")) {
-        const botMessage = {
-          text: `<a href="https://www.linkedin.com/in/vinicius-cezar-casseb-a1b803189/" target="_blank" style="background: none !important; border: none !important; padding: 0 !important; display: inline-block;">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/LinkedIn_icon.svg/2048px-LinkedIn_icon.svg.png" alt="LinkedIn" width="50" height="50" style="max-width: 50px; height: auto; background: none !important; border: none !important; padding: 0 !important;"/>
-                </a>`,
-          isUser: false,
-        };
-        setMessages((prev) => [...prev, botMessage]);
-      }
-      } catch (error) {
-        console.error('Erro ao enviar mensagem:', error);
-        const errorMessage = { text: 'Sorry, something is wrong :/', isUser: false };
-        setMessages((prev) => [...prev, errorMessage]);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    // Send to logs
+  // Função para buscar as salas do endpoint
+  const fetchRooms = async (): Promise<Room[]> => {
     try {
-      if (typeof window !== "undefined" && window.localStorage) {
-      const dtsent = localStorage.getItem('dtsent');
-      const message = localStorage.getItem('message');
-      const flag_fm = localStorage.getItem('flag_fm');
-      const input_ai = localStorage.getItem('input_ai');
-      const context_faiss = localStorage.getItem('contexto_faiss');
-      const userid = localStorage.getItem('userid');
-
-      fetch('https://privatechatbotia-dpbye3cdbmandchy.brazilsouth-01.azurewebsites.net/sentdata/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          dtsent,
-          message,
-          flag_fm,
-          input_ai,
-          context_faiss,
-          userid
-        }),
-      })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Erro ao enviar mensagem');
-          }
-          return response.json();
-        })
-        .then(data => {
-          console.log('Dados enviados com sucesso:', data);
-        })
-        .catch(error => {
-          console.error('Erro ao enviar dados:', error);
-        });
-    }} catch (error) {
-      console.error('Erro inesperado:', error);
+      const response = await fetch('http://localhost:8000/rooms/');
+      if (!response.ok) throw new Error('Erro ao buscar salas');
+      return await response.json();
+    } catch (error) {
+      console.error('Erro ao buscar salas:', error);
+      return [];
     }
   };
 
-  const handleSuggestionClick = (suggestion: string) => {
-    sendMessage(suggestion); // Envia a sugestão como mensagem
-    setSuggestions((prev) => prev.filter((s) => s !== suggestion)); // Remove a sugestão usada
+
+  const loadRooms = async () => {
+    setLoading(true);
+    try {
+      const fetchedRooms = await fetchRooms();
+      setRooms(fetchedRooms);
+    } catch (error) {
+      console.error('Erro ao carregar salas:', error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // UseEffect para carregar as salas
+  useEffect(() => {
+    loadRooms();
+  }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleBookRoom = (room: Room) => {
+    setSelectedRoom(room);
+    
+    // Define horários padrão (agora + 1h)
+    const now = new Date();
+    const defaultStart = new Date(now.getTime() + 60 * 60 * 1000);
+    const defaultEnd = new Date(defaultStart.getTime() + 60 * 60 * 1000);
+    
+    setFormData({
+      name: '',
+      startTime: defaultStart.toISOString().slice(0, 16),
+      endTime: defaultEnd.toISOString().slice(0, 16),
+    });
+    
+    setView('form');
+  };
+
+
+   const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRoom) return;
+    
+    setLoading(true);
+
+    try {
+      // Validações básicas
+      if (!formData.name.trim()) throw new Error('Informe seu nome');
+      if (!formData.startTime || !formData.endTime) throw new Error('Informe os horários');
+      
+      const start = new Date(formData.startTime);
+      const end = new Date(formData.endTime);
+      if (start >= end) throw new Error('Horário final deve ser após o inicial');
+
+      // Dados da reserva
+      const reservation = {
+        room_id: selectedRoom.id,
+        user_name: formData.name,
+        start_time: formData.startTime,
+        end_time: formData.endTime
+      };
+
+      // Envia para o backend
+      const response = await fetch('http://localhost:8000/reservations/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reservation)
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Erro ao reservar');
+      }
+
+      // Atualiza a lista de salas
+      await loadRooms();
+      
+      // Limpa e volta para a lista
+      setFormData({ name: '', startTime: '', endTime: '' });
+      setView('list');
+      
+      alert('Reserva realizada com sucesso!');
+    } catch (error) {
+      console.error('Erro na reserva:', error);
+      alert(error instanceof Error ? error.message : 'Erro desconhecido');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+    if (loading && view === 'list') {
+    return (
+      <Container>
+        <MainContent>
+          <Header>Salas de Estudo</Header>
+          <LoadingIndicator>
+            <Clock size={32} />
+          </LoadingIndicator>
+        </MainContent>
+      </Container>
+    );
+  }
 
   return (
     <Container>
       <MainContent>
-        <Header>Vini AI Assistant</Header>
-        <ChatContainer ref={chatContainerRef}>
-          {messages.map((msg, index) => (
-            <Message key={index} $isUser={msg.isUser}>
-              <div dangerouslySetInnerHTML={{ __html: formatMessage(msg.text) }} />
-            </Message>
-          ))}
-          {isLoading && <LoadingMessage>Thinking</LoadingMessage>}
-        </ChatContainer>
-
-        <InputContainer>
-                {/* Exibe as sugestões apenas se showSuggestions for true */}
-                {showSuggestions && suggestions.length > 0 && (
-          <SuggestionsContainer>
-            <SuggestionBubble onClick={() => handleSuggestionClick(suggestions[0])}>
-              {suggestions[0]}
-            </SuggestionBubble>
-          </SuggestionsContainer>
+        <Header>Salas de Estudo</Header>
+        
+        {view === 'list' ? (
+          <RoomListContainer>
+            {rooms.map(room => (
+              <RoomCard
+                key={room.id}
+                $available={room.available}
+                onClick={() => handleBookRoom(room)}
+              >
+                <RoomImage>{room.name.charAt(0)}</RoomImage>
+                <RoomTitle>{room.name}</RoomTitle>
+                <RoomMeta>
+                  <User size={16} /> {room.capacity} pessoas
+                </RoomMeta>
+                <AvailabilityBadge $available={room.available}>
+                  {room.available ? 'Disponível' : 'Indisponível'}
+                </AvailabilityBadge>
+                <BookButton
+                  $available={room.available}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleBookRoom(room);
+                  }}
+                >
+                  <Calendar size={16} /> Reservar
+                </BookButton>
+              </RoomCard>
+            ))}
+          </RoomListContainer>
+        ) : (
+          <FormContainer>
+            <FormHeader>
+              <ActionButton onClick={() => setView('list')}>
+                <ArrowLeft size={18} />
+              </ActionButton>
+              <FormTitle>Reservar {selectedRoom?.name}</FormTitle>
+            </FormHeader>
+            
+            <form onSubmit={handleSubmit}>
+              <FormGroup>
+                <FormLabel>Seu Nome</FormLabel>
+                <FormInput
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Digite seu nome"
+                  required
+                />
+              </FormGroup>
+              
+              <FormGroup>
+                <FormLabel>Data e Horário de Início</FormLabel>
+                <FormInput
+                  type="datetime-local"
+                  name="startTime"
+                  value={formData.startTime}
+                  onChange={handleInputChange}
+                  required
+                />
+              </FormGroup>
+              
+              <FormGroup>
+                <FormLabel>Data e Horário de Término</FormLabel>
+                <FormInput
+                  type="datetime-local"
+                  name="endTime"
+                  value={formData.endTime}
+                  onChange={handleInputChange}
+                  required
+                  min={formData.startTime}
+                />
+              </FormGroup>
+              
+              <FormActions>
+                <ActionButton type="button" onClick={() => setView('list')}>
+                  <ArrowLeft size={16} /> Voltar
+                </ActionButton>
+                <ActionButton $primary type="submit" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Clock size={16} /> Processando...
+                    </>
+                  ) : (
+                    <>
+                      <Check size={16} /> Confirmar Reserva
+                    </>
+                  )}
+                </ActionButton>
+              </FormActions>
+            </form>
+          </FormContainer>
         )}
-          <Input
-            type="text"
-            placeholder="Type your message"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-          />
-          <Button onClick={() => sendMessage()}>
-            <Send size={20} color="white" />
-          </Button>
-        </InputContainer>
       </MainContent>
     </Container>
   );
