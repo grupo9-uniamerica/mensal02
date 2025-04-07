@@ -1,29 +1,32 @@
-# Etapa de build
+# Etapa 1: Construção
 FROM node:18 AS builder
-
-# Cria o diretório e define permissões explícitas
-RUN mkdir -p /app && chmod -R 777 /app
 WORKDIR /app
 
-# Copia apenas os arquivos necessários para instalação
+# Copiar arquivos essenciais
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm install --frozen-lockfile
 
-# Copia o restante com permissões padrão
+# Copiar código-fonte e construir a aplicação
 COPY . .
 RUN npm run build
 
-# Etapa de produção
-FROM node:18-alpine
-
-RUN mkdir -p /app && chmod -R 777 /app
+# Etapa 2: Servidor de Produção
+FROM node:18 AS runner
 WORKDIR /app
 
-COPY --from=builder /app/package.json /app/package-lock.json ./
-RUN npm ci --only=production
-
+# Copiar artefatos gerados na etapa anterior
+COPY --from=builder /app/package.json ./
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 
+# Instalar apenas dependências de produção
+RUN npm install --production --frozen-lockfile
+
+# Definir variável de ambiente para execução em produção
+ENV NODE_ENV=production
+
+# Expor porta padrão do Next.js
 EXPOSE 3000
-CMD ["npm", "start"]
+
+# Comando para iniciar o servidor
+CMD ["npm", "run", "start"]
