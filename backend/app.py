@@ -23,7 +23,7 @@ app = FastAPI(title="Sistema de Reserva de Salas",
 # Configuração de CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Permite o frontend
+    allow_origins=["http://10.0.0.3:80", "http://35.199.127.220:80"],  # Permite o frontend
     allow_credentials=True,
     allow_methods=["*"],  # Permite todos os métodos (GET, POST, etc.)
     allow_headers=["*"],  # Permite todos os headers
@@ -196,4 +196,4 @@ def verify_database_connection():
 if __name__ == "__main__":
     verify_database_connection()  # Verifica o banco antes de inicializar o servidor
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8080)
