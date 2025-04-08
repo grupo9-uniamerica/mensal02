@@ -274,7 +274,7 @@ export default function StudyRoomScheduler() {
   // Função para buscar as salas do endpoint
   const fetchRooms = async (): Promise<Room[]> => {
     try {
-      const response = await fetch('http://localhost:8000/rooms/');
+      const response = await fetch('/rooms/');
       if (!response.ok) throw new Error('Erro ao buscar salas');
       return await response.json();
     } catch (error) {
@@ -348,7 +348,7 @@ export default function StudyRoomScheduler() {
       };
 
       // Envia para o backend
-      const response = await fetch('http://localhost:8000/reservations/', {
+      const response = await fetch('/reservations/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(reservation)
