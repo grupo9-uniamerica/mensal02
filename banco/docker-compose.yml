@@ -1,0 +1,52 @@
+version: '1.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_container
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: kappa110520
+      MYSQL_DATABASE: salasdb
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: kappa110520
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./my.cnf:/etc/mysql/conf.d/my.cnf
+    networks:
+      - minha_rede
+
+volumes:
+  mysql_data:
+
+networks:
+  minha_rede:
+    driver: bridge
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -245,29 +245,60 @@ const LoadingIndicator = styled.div`
   }
 `;
 
+interface Room {
+  id: number;
+  name: string;
+  capacity: number;
+  location: string;
+  available: boolean;
+  created_at: string;
+}
+
+interface ReservationFormData {
+  name: string;
+  startTime: string;
+  endTime: string;
+}
+
 export default function StudyRoomScheduler() {
   const [view, setView] = useState<'list' | 'form'>('list');
-  const [rooms, setRooms] = useState<any[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedRoom, setSelectedRoom] = useState<any>(null);
-  const [formData, setFormData] = useState({
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [formData, setFormData] = useState<ReservationFormData>({
     name: '',
     startTime: '',
-    endTime: ''
+    endTime: '',
   });
 
-  // Mock data - substitua por chamadas reais à API
-  useEffect(() => {
-    setTimeout(() => {
-      const mockRooms = [
-        { id: '1', name: 'Sala Silenciosa', capacity: 2, available: true, description: 'Ambiente ideal para estudo individual' },
-        { id: '2', name: 'Sala Colaborativa', capacity: 6, available: true, description: 'Perfeita para trabalhos em grupo' },
-        { id: '3', name: 'Sala de Grupo', capacity: 10, available: false, description: 'Espaço amplo para grandes equipes' },
-        { id: '4', name: 'Sala Premium', capacity: 4, available: true, description: 'Mobiliário ergonômico e equipamentos modernos' },
-      ];
-      setRooms(mockRooms);
+  // Função para buscar as salas do endpoint
+  const fetchRooms = async (): Promise<Room[]> => {
+    try {
+      const response = await fetch('/rooms/');
+      if (!response.ok) throw new Error('Erro ao buscar salas');
+      return await response.json();
+    } catch (error) {
+      console.error('Erro ao buscar salas:', error);
+      return [];
+    }
+  };
+
+
+  const loadRooms = async () => {
+    setLoading(true);
+    try {
+      const fetchedRooms = await fetchRooms();
+      setRooms(fetchedRooms);
+    } catch (error) {
+      console.error('Erro ao carregar salas:', error);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
+  };
+
+  // UseEffect para carregar as salas
+  useEffect(() => {
+    loadRooms();
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -275,33 +306,76 @@ export default function StudyRoomScheduler() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleBookRoom = (room: any) => {
-    if (!room.available) return;
+  const handleBookRoom = (room: Room) => {
     setSelectedRoom(room);
+    
+    // Define horários padrão (agora + 1h)
+    const now = new Date();
+    const defaultStart = new Date(now.getTime() + 60 * 60 * 1000);
+    const defaultEnd = new Date(defaultStart.getTime() + 60 * 60 * 1000);
+    
+    setFormData({
+      name: '',
+      startTime: defaultStart.toISOString().slice(0, 16),
+      endTime: defaultEnd.toISOString().slice(0, 16),
+    });
+    
     setView('form');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+
+   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedRoom) return;
+    
     setLoading(true);
-    
-    // Validação básica de horário
-    if (new Date(formData.startTime) >= new Date(formData.endTime)) {
-      alert('O horário de término deve ser após o horário de início');
-      setLoading(false);
-      return;
-    }
-    
-    // Simular envio para a API
-    setTimeout(() => {
-      alert(`Agendamento confirmado!\nSala: ${selectedRoom.name}\nPara: ${formData.name}\nInício: ${new Date(formData.startTime).toLocaleString()}\nTérmino: ${new Date(formData.endTime).toLocaleString()}`);
+
+    try {
+      // Validações básicas
+      if (!formData.name.trim()) throw new Error('Informe seu nome');
+      if (!formData.startTime || !formData.endTime) throw new Error('Informe os horários');
+      
+      const start = new Date(formData.startTime);
+      const end = new Date(formData.endTime);
+      if (start >= end) throw new Error('Horário final deve ser após o inicial');
+
+      // Dados da reserva
+      const reservation = {
+        room_id: selectedRoom.id,
+        user_name: formData.name,
+        start_time: formData.startTime,
+        end_time: formData.endTime
+      };
+
+      // Envia para o backend
+      const response = await fetch('/reservations/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reservation)
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Erro ao reservar');
+      }
+
+      // Atualiza a lista de salas
+      await loadRooms();
+      
+      // Limpa e volta para a lista
       setFormData({ name: '', startTime: '', endTime: '' });
       setView('list');
+      
+      alert('Reserva realizada com sucesso!');
+    } catch (error) {
+      console.error('Erro na reserva:', error);
+      alert(error instanceof Error ? error.message : 'Erro desconhecido');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
-  if (loading && view === 'list') {
+    if (loading && view === 'list') {
     return (
       <Container>
         <MainContent>
@@ -319,28 +393,23 @@ export default function StudyRoomScheduler() {
       <MainContent>
         <Header>Salas de Estudo</Header>
         
-        {view === 'list' ? (  
+        {view === 'list' ? (
           <RoomListContainer>
             {rooms.map(room => (
-              <RoomCard 
-                key={room.id} 
+              <RoomCard
+                key={room.id}
                 $available={room.available}
                 onClick={() => handleBookRoom(room)}
               >
-                <RoomImage>
-                  {room.name.charAt(0)}
-                </RoomImage>
+                <RoomImage>{room.name.charAt(0)}</RoomImage>
                 <RoomTitle>{room.name}</RoomTitle>
                 <RoomMeta>
                   <User size={16} /> {room.capacity} pessoas
                 </RoomMeta>
-                <p style={{ color: '#a0aec0', fontSize: '0.9rem', marginBottom: '1rem' }}>
-                  {room.description}
-                </p>
                 <AvailabilityBadge $available={room.available}>
                   {room.available ? 'Disponível' : 'Indisponível'}
                 </AvailabilityBadge>
-                <BookButton 
+                <BookButton
                   $available={room.available}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -369,7 +438,7 @@ export default function StudyRoomScheduler() {
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  placeholder="Digite seu nome completo"
+                  placeholder="Digite seu nome"
                   required
                 />
               </FormGroup>
@@ -395,19 +464,6 @@ export default function StudyRoomScheduler() {
                   required
                   min={formData.startTime}
                 />
-              </FormGroup>
-              
-              <FormGroup>
-                <FormLabel>Sala Selecionada</FormLabel>
-                <div style={{
-                  padding: '0.75rem 1rem',
-                  background: '#101524',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  color: '#e2e8f0'
-                }}>
-                  {selectedRoom?.name} ({selectedRoom?.capacity} pessoas)
-                </div>
               </FormGroup>
               
               <FormActions>

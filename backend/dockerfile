@@ -1,29 +1,20 @@
-# Usa uma imagem oficial do Python minimalista
-FROM python:3.11.3-slim
+# Usar a imagem base Python 3.10 slim
+FROM python:3.10-slim
 
-# Define um diretório de trabalho
-WORKDIR /app  
+# Diretório de trabalho dentro do contêiner
+WORKDIR /app
 
-# Copia somente os arquivos essenciais primeiro (para melhor uso do cache)
-COPY requirements.txt .
+# Copiar os arquivos de dependências primeiro (para evitar cache excessivo)
+COPY requirements.txt ./
 
-# Instala dependências do sistema necessárias antes de instalar os pacotes Python
-RUN apt-get update && apt-get install -y \
-    libpq-dev gcc \
-    && rm -rf /var/lib/apt/lists/*
+# Instalar as dependências do Python
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Instala dependências do projeto
-RUN pip install --no-cache-dir -r requirements.txt  
-
-# Copia os arquivos restantes do projeto
+# Copiar o código da aplicação para o contêiner
 COPY . .
 
-# Expõe a porta da aplicação
-EXPOSE 8000  
+# Expor a porta padrão para a API (ajuste conforme necessário)
+EXPOSE 8080
 
-# Define um usuário não-root para segurança
-RUN useradd -m appuser
-USER appuser
-
-# Comando para iniciar a aplicação
-CMD ["python", "main.py"]  
+# Comando para iniciar a aplicação (ajuste conforme seu framework, exemplo com Flask)
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080"]

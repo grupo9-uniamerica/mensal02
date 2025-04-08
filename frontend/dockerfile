@@ -1,24 +1,32 @@
-# Usando a imagem oficial do Node.js
+# Etapa 1: Construção
 FROM node:18 AS builder
-
 WORKDIR /app
 
-# Copia os arquivos do projeto
+# Copiar arquivos essenciais
 COPY package.json package-lock.json ./
-RUN npm install
+RUN npm install --frozen-lockfile
 
+# Copiar código-fonte e construir a aplicação
 COPY . .
-
-# Compila o projeto Next.js
 RUN npm run build
 
-# Segunda fase para servir o app
-FROM node:18-alpine
-
+# Etapa 2: Servidor de Produção
+FROM node:18 AS runner
 WORKDIR /app
 
-COPY --from=builder /app ./
+# Copiar artefatos gerados na etapa anterior
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
 
+# Instalar apenas dependências de produção
+RUN npm install --production --frozen-lockfile
+
+# Definir variável de ambiente para execução em produção
+ENV NODE_ENV=production
+
+# Expor porta padrão do Next.js
 EXPOSE 3000
 
+# Comando para iniciar o servidor
 CMD ["npm", "run", "start"]
