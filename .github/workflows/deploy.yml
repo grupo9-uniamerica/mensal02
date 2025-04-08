@@ -1,0 +1,48 @@
+name: Deploy Mensal02
+
+on:
+  push:
+    branches: [ "dev" ]  # ajuste se sua branch principal for 'master'
+
+jobs:
+  deploy:
+    name: Deploy nas VMs
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📥 Clonar repositório
+      uses: actions/checkout@v3
+
+    - name: 🗝️ Configurar acesso SSH
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: 📤 Copiar código para a VM frontend
+      run: |
+        rsync -avz ./ ${{ secrets.FRONT_USER }}@${{ secrets.FRONT_HOST }}:/home/${{ secrets.FRONT_USER }}/mensal02/
+
+    - name: 🚀 Executar deploy nas VMs
+      run: |
+        ssh ${{ secrets.FRONT_USER }}@${{ secrets.FRONT_HOST }} << 'EOF'
+          echo "📦 Deploy no FRONTEND (10.0.0.3)"
+          cd /home/leonardo_r_calegario/mensal02/frontend
+          docker build -t mensal-frontend .
+          docker stop mensal-frontend || true && docker rm mensal-frontend || true
+          docker run -d --name mensal-frontend -p 80:80 mensal-frontend
+
+          echo "🛠️ Deploy no BACKEND (10.0.0.4)"
+          ssh leonardo_r_calegario@10.0.0.4 << 'BACKEND'
+            cd /mensal02/backend
+            docker build -t mensal-backend .
+            docker stop mensal-backend || true && docker rm mensal-backend || true
+            docker run -d --name mensal-backend -p 8080:8080 mensal-backend
+          BACKEND
+
+          echo "🛢️ Deploy no BANCO (10.0.0.5)"
+          ssh leonardo_r_calegario@10.0.0.5 << 'BANCO'
+            cd /mensal02/banco
+            docker-compose down
+            docker-compose up -d
+          BANCO
+        EOF
