@@ -20,9 +20,14 @@ jobs:
 
     - name: 🔍 Verificar se os secrets estão disponíveis
       run: |
-        echo "FRONT_USER: ${{ secrets.FRONT_USER }}"
-        echo "FRONT_HOST: ${{ secrets.FRONT_HOST }}"
-        echo "SSH_PRIVATE_KEY: ${#{{ secrets.SSH_PRIVATE_KEY }}} caracteres"
+        echo "FRONT_USER: $FRONT_USER"
+        echo "FRONT_HOST: $FRONT_HOST"
+        echo "Tamanho da chave privada: ${#SSH_PRIVATE_KEY} caracteres"
+      env:
+        FRONT_USER: ${{ secrets.FRONT_USER }}
+        FRONT_HOST: ${{ secrets.FRONT_HOST }}
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
 
     - name: 📤 Copiar código para a VM frontend
       run: |
