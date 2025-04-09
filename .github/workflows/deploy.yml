@@ -18,6 +18,13 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+    - name: 🛡️ Adicionar FRONT_HOST ao known_hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H $FRONT_HOST >> ~/.ssh/known_hosts
+      env:
+        FRONT_HOST: ${{ secrets.FRONT_HOST }}
+
     - name: 🔍 Verificar se os secrets estão disponíveis
       run: |
         echo "FRONT_USER: $FRONT_USER"
@@ -27,7 +34,6 @@ jobs:
         FRONT_USER: ${{ secrets.FRONT_USER }}
         FRONT_HOST: ${{ secrets.FRONT_HOST }}
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-
 
     - name: 📤 Copiar código para a VM frontend
       run: |
@@ -42,7 +48,6 @@ jobs:
           docker build -t mensal-frontend .
           docker stop mensal-frontend || true && docker rm mensal-frontend || true
           docker run -d --name mensal-frontend -p 80:80 mensal-frontend
-
           echo "🛠️ Deploy no BACKEND (10.0.0.4)"
           ssh leonardo_r_calegario@10.0.0.4 << 'BACKEND'
             cd /mensal02/backend
@@ -50,7 +55,6 @@ jobs:
             docker stop mensal-backend || true && docker rm mensal-backend || true
             docker run -d --name mensal-backend -p 8080:8080 mensal-backend
           BACKEND
-
           echo "🛢️ Deploy no BANCO (10.0.0.5)"
           ssh leonardo_r_calegario@10.0.0.5 << 'BANCO'
             cd /mensal02/banco
