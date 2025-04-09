@@ -35,7 +35,7 @@ jobs:
           cd /home/leonardo_r_calegario/mensal02/frontend
           sudo docker build -t mensal-frontend .
           sudo docker stop mensal-frontend || true && sudo docker rm mensal-frontend || true
-          sudo docker run -d --name mensal-frontend -p 80:80 mensal-frontend
+          sudo docker run -d --name mensal-frontend -p 3000:3000 mensal-frontend
 
           echo "📁 Enviando backend para VM BACK (10.0.0.4)"
           scp -r /home/leonardo_r_calegario/mensal02/backend leonardo_r_calegario@10.0.0.4:/home/leonardo_r_calegario/mensal02/
@@ -47,8 +47,8 @@ jobs:
           ssh leonardo_r_calegario@10.0.0.4 '
             cd /home/leonardo_r_calegario/mensal02/backend
             sudo docker build -t mensal-backend .
-            sudo docker stop mensal-backend || true && sudo docker rm mensal-backend || true
-            sudo docker run -d --name mensal-backend -p 8080:8080 mensal-backend
+            sudo docker stop back-container || true && sudo docker rm back-container || true
+            sudo docker run -d --name back-container -p 8080:8080 mensal-backend
           '
 
           echo "🛢️ DB: Subindo docker-compose via SSH"
