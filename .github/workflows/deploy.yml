@@ -2,7 +2,7 @@ name: Deploy Mensal02
 
 on:
   push:
-    branches: [ "dev" ]  # Ajuste para sua branch principal, se for 'main' ou 'master'
+    branches: [ "dev" ]
 
 jobs:
   deploy:
@@ -21,44 +21,40 @@ jobs:
     - name: 🛡️ Adicionar FRONT_HOST ao known_hosts
       run: |
         mkdir -p ~/.ssh
-        ssh-keyscan -H $FRONT_HOST >> ~/.ssh/known_hosts
-      env:
-        FRONT_HOST: ${{ secrets.FRONT_HOST }}
+        ssh-keyscan -H ${{ secrets.FRONT_HOST }} >> ~/.ssh/known_hosts
 
-    - name: 🔍 Verificar se os secrets estão disponíveis
+    - name: 📤 Copiar código para a VM FRONTEND
       run: |
-        echo "FRONT_USER: $FRONT_USER"
-        echo "FRONT_HOST: $FRONT_HOST"
-        echo "Tamanho da chave privada: ${#SSH_PRIVATE_KEY} caracteres"
-      env:
-        FRONT_USER: ${{ secrets.FRONT_USER }}
-        FRONT_HOST: ${{ secrets.FRONT_HOST }}
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-
-    - name: 📤 Copiar código para a VM frontend
-      run: |
-        echo "🔄 Enviando arquivos via rsync..."
+        echo "🔄 Enviando projeto completo para a FRONT (10.0.0.3)..."
         rsync -avz ./ ${{ secrets.FRONT_USER }}@${{ secrets.FRONT_HOST }}:/home/${{ secrets.FRONT_USER }}/mensal02/
 
-    - name: 🚀 Executar deploy nas VMs
+    - name: 🚀 Executar deploy completo a partir da FRONT
       run: |
         ssh ${{ secrets.FRONT_USER }}@${{ secrets.FRONT_HOST }} << 'EOF'
-          echo "📦 Deploy no FRONTEND (10.0.0.3)"
+          echo "📦 FRONTEND: Build e container"
           cd /home/leonardo_r_calegario/mensal02/frontend
           docker build -t mensal-frontend .
           docker stop mensal-frontend || true && docker rm mensal-frontend || true
           docker run -d --name mensal-frontend -p 80:80 mensal-frontend
-          echo "🛠️ Deploy no BACKEND (10.0.0.4)"
-          ssh leonardo_r_calegario@10.0.0.4 << 'BACKEND'
-            cd /mensal02/backend
+
+          echo "📁 Enviando backend para VM BACK (10.0.0.4)"
+          scp -r /home/leonardo_r_calegario/mensal02/backend leonardo_r_calegario@10.0.0.4:/home/leonardo_r_calegario/mensal02/
+
+          echo "📁 Enviando banco para VM DB (10.0.0.5)"
+          scp -r /home/leonardo_r_calegario/mensal02/banco leonardo_r_calegario@10.0.0.5:/home/leonardo_r_calegario/mensal02/
+
+          echo "🛠️ BACKEND: Build e execução via SSH"
+          ssh leonardo_r_calegario@10.0.0.4 '
+            cd /home/leonardo_r_calegario/mensal02/backend
             docker build -t mensal-backend .
             docker stop mensal-backend || true && docker rm mensal-backend || true
             docker run -d --name mensal-backend -p 8080:8080 mensal-backend
-          BACKEND
-          echo "🛢️ Deploy no BANCO (10.0.0.5)"
-          ssh leonardo_r_calegario@10.0.0.5 << 'BANCO'
-            cd /mensal02/banco
+          '
+
+          echo "🛢️ DB: Subindo docker-compose via SSH"
+          ssh leonardo_r_calegario@10.0.0.5 '
+            cd /home/leonardo_r_calegario/mensal02/banco
             docker-compose down
             docker-compose up -d
-          BANCO
+          '
         EOF
