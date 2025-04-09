@@ -18,6 +18,12 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+    - name: 🔍 Verificar se os secrets estão disponíveis
+      run: |
+        echo "FRONT_USER: ${{ secrets.FRONT_USER }}"
+        echo "FRONT_HOST: ${{ secrets.FRONT_HOST }}"
+        echo "SSH_PRIVATE_KEY: ${#{{ secrets.SSH_PRIVATE_KEY }}} caracteres"
+
     - name: 📤 Copiar código para a VM frontend
       run: |
         echo "🔄 Enviando arquivos via rsync..."
