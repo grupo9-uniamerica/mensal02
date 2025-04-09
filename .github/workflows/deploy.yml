@@ -33,9 +33,9 @@ jobs:
         ssh ${{ secrets.FRONT_USER }}@${{ secrets.FRONT_HOST }} << 'EOF'
           echo "📦 FRONTEND: Build e container"
           cd /home/leonardo_r_calegario/mensal02/frontend
-          sudo docker build -t mensal-frontend .
-          sudo docker stop mensal-frontend || true && sudo docker rm mensal-frontend || true
-          sudo docker run -d --name mensal-frontend -p 80:80 mensal-frontend
+          docker build -t mensal-frontend .
+          docker stop mensal-frontend || true && docker rm mensal-frontend || true
+          docker run -d --name mensal-frontend -p 80:80 mensal-frontend
 
           echo "📁 Enviando backend para VM BACK (10.0.0.4)"
           scp -r /home/leonardo_r_calegario/mensal02/backend leonardo_r_calegario@10.0.0.4:/home/leonardo_r_calegario/mensal02/
@@ -46,15 +46,15 @@ jobs:
           echo "🛠️ BACKEND: Build e execução via SSH"
           ssh leonardo_r_calegario@10.0.0.4 '
             cd /home/leonardo_r_calegario/mensal02/backend
-            sudo docker build -t mensal-backend .
-            sudo docker stop mensal-backend || true && sudo docker rm mensal-backend || true
-            sudo docker run -d --name mensal-backend -p 8080:8080 mensal-backend
+            docker build -t mensal-backend .
+            docker stop mensal-backend || true && docker rm mensal-backend || true
+            docker run -d --name mensal-backend -p 8080:8080 mensal-backend
           '
 
           echo "🛢️ DB: Subindo docker-compose via SSH"
           ssh leonardo_r_calegario@10.0.0.5 '
             cd /home/leonardo_r_calegario/mensal02/banco
-            sudo docker-compose down
-            sudo docker-compose up -d
+            docker-compose down
+            docker-compose up -d
           '
         EOF
