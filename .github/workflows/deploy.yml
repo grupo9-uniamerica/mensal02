@@ -2,7 +2,7 @@ name: Deploy Mensal02
 
 on:
   push:
-    branches: [ "dev" ]  # ajuste se sua branch principal for 'master'
+    branches: [ "dev" ]  # Ajuste para sua branch principal, se for 'main' ou 'master'
 
 jobs:
   deploy:
@@ -20,6 +20,7 @@ jobs:
 
     - name: 📤 Copiar código para a VM frontend
       run: |
+        echo "🔄 Enviando arquivos via rsync..."
         rsync -avz ./ ${{ secrets.FRONT_USER }}@${{ secrets.FRONT_HOST }}:/home/${{ secrets.FRONT_USER }}/mensal02/
 
     - name: 🚀 Executar deploy nas VMs
