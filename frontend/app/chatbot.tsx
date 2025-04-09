@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import styled from "styled-components";
-import { Calendar, Clock, User, ArrowLeft, Check } from "lucide-react";
+import { Calendar, Clock, User, ArrowLeft, Check, Plus } from "lucide-react";
 
 // Estilos baseados no exemplo fornecido
 const Container = styled.div`
@@ -261,7 +261,7 @@ interface ReservationFormData {
 }
 
 export default function StudyRoomScheduler() {
-  const [view, setView] = useState<'list' | 'form'>('list');
+  const [view, setView] = useState<'list' | 'form' | 'addRoom'>('list');
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
@@ -269,6 +269,11 @@ export default function StudyRoomScheduler() {
     name: '',
     startTime: '',
     endTime: '',
+  });
+  const [newRoomData, setNewRoomData] = useState({
+    name: '',
+    capacity: '',
+    location: ''
   });
 
   // Função para buscar as salas do endpoint
@@ -283,7 +288,6 @@ export default function StudyRoomScheduler() {
     }
   };
 
-
   const loadRooms = async () => {
     setLoading(true);
     try {
@@ -296,7 +300,6 @@ export default function StudyRoomScheduler() {
     }
   };
 
-  // UseEffect para carregar as salas
   useEffect(() => {
     loadRooms();
   }, []);
@@ -306,10 +309,14 @@ export default function StudyRoomScheduler() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleNewRoomInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setNewRoomData(prev => ({ ...prev, [name]: value }));
+  };
+
   const handleBookRoom = (room: Room) => {
     setSelectedRoom(room);
     
-    // Define horários padrão (agora + 1h)
     const now = new Date();
     const defaultStart = new Date(now.getTime() + 60 * 60 * 1000);
     const defaultEnd = new Date(defaultStart.getTime() + 60 * 60 * 1000);
@@ -323,15 +330,72 @@ export default function StudyRoomScheduler() {
     setView('form');
   };
 
+  //Adicionar Sala
+  const handleAddRoom = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+  
+    try {
+      // Validações básicas
+      if (!newRoomData.name.trim()) throw new Error('Informe o nome da sala');
+      if (!newRoomData.capacity || isNaN(Number(newRoomData.capacity))) throw new Error('Capacidade inválida');
+      if (!newRoomData.location.trim()) throw new Error('Informe a localização');
+  
+      const room = {
+        name: newRoomData.name,
+        capacity: parseInt(newRoomData.capacity),
+        location: newRoomData.location,
+        available: true
+      };
+  
+      // Envia para o backend
+      const response = await fetch('/rooms/', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json' // Garante que esperamos JSON na resposta
+        },
+        body: JSON.stringify(room)
+      });
+  
+      const responseData = await response.text(); // Primeiro lemos como texto
+      
+      // Tentamos parsear apenas se a resposta não estiver vazia
+      const data = responseData ? JSON.parse(responseData) : null;
+  
+      if (!response.ok) {
+        throw new Error(data?.message || data?.detail || 'Erro ao adicionar sala');
+      }
+  
+      // Atualiza a lista de salas
+      await loadRooms();
+      
+      // Limpa e volta para a lista
+      setNewRoomData({ name: '', capacity: '', location: '' });
+      setView('list');
+      
+      alert('Sala adicionada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao adicionar sala:', error);
+      
+      // Mensagem mais amigável para erros de JSON
+      if (error instanceof SyntaxError) {
+        alert('Resposta inválida do servidor. Por favor, tente novamente.');
+      } else {
+        alert(error instanceof Error ? error.message : 'Erro desconhecido');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-   const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRoom) return;
     
     setLoading(true);
 
     try {
-      // Validações básicas
       if (!formData.name.trim()) throw new Error('Informe seu nome');
       if (!formData.startTime || !formData.endTime) throw new Error('Informe os horários');
       
@@ -339,7 +403,6 @@ export default function StudyRoomScheduler() {
       const end = new Date(formData.endTime);
       if (start >= end) throw new Error('Horário final deve ser após o inicial');
 
-      // Dados da reserva
       const reservation = {
         room_id: selectedRoom.id,
         user_name: formData.name,
@@ -347,7 +410,6 @@ export default function StudyRoomScheduler() {
         end_time: formData.endTime
       };
 
-      // Envia para o backend
       const response = await fetch('/reservations/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -359,13 +421,9 @@ export default function StudyRoomScheduler() {
         throw new Error(error.detail || 'Erro ao reservar');
       }
 
-      // Atualiza a lista de salas
       await loadRooms();
-      
-      // Limpa e volta para a lista
       setFormData({ name: '', startTime: '', endTime: '' });
       setView('list');
-      
       alert('Reserva realizada com sucesso!');
     } catch (error) {
       console.error('Erro na reserva:', error);
@@ -375,7 +433,7 @@ export default function StudyRoomScheduler() {
     }
   };
 
-    if (loading && view === 'list') {
+  if (loading && view === 'list') {
     return (
       <Container>
         <MainContent>
@@ -391,7 +449,18 @@ export default function StudyRoomScheduler() {
   return (
     <Container>
       <MainContent>
-        <Header>Salas de Estudo</Header>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem' }}>
+          <Header>Salas de Estudo</Header>
+          {view === 'list' && (
+            <ActionButton 
+              $primary 
+              onClick={() => setView('addRoom')}
+              style={{ padding: '0.5rem', borderRadius: '50%' }}
+            >
+              <Plus size={20} />
+            </ActionButton>
+          )}
+        </div>
         
         {view === 'list' ? (
           <RoomListContainer>
@@ -421,7 +490,7 @@ export default function StudyRoomScheduler() {
               </RoomCard>
             ))}
           </RoomListContainer>
-        ) : (
+        ) : view === 'form' ? (
           <FormContainer>
             <FormHeader>
               <ActionButton onClick={() => setView('list')}>
@@ -478,6 +547,71 @@ export default function StudyRoomScheduler() {
                   ) : (
                     <>
                       <Check size={16} /> Confirmar Reserva
+                    </>
+                  )}
+                </ActionButton>
+              </FormActions>
+            </form>
+          </FormContainer>
+        ) : (
+          <FormContainer>
+            <FormHeader>
+              <ActionButton onClick={() => setView('list')}>
+                <ArrowLeft size={18} />
+              </ActionButton>
+              <FormTitle>Adicionar Sala de Estudo</FormTitle>
+            </FormHeader>
+            
+            <form onSubmit={handleAddRoom}>
+              <FormGroup>
+                <FormLabel>Nome da Sala</FormLabel>
+                <FormInput
+                  type="text"
+                  name="name"
+                  value={newRoomData.name}
+                  onChange={handleNewRoomInputChange}
+                  placeholder="Digite o nome da sala"
+                  required
+                />
+              </FormGroup>
+              
+              <FormGroup>
+                <FormLabel>Capacidade (pessoas)</FormLabel>
+                <FormInput
+                  type="number"
+                  name="capacity"
+                  value={newRoomData.capacity}
+                  onChange={handleNewRoomInputChange}
+                  placeholder="Digite a capacidade"
+                  required
+                  min="1"
+                />
+              </FormGroup>
+              
+              <FormGroup>
+                <FormLabel>Localização</FormLabel>
+                <FormInput
+                  type="text"
+                  name="location"
+                  value={newRoomData.location}
+                  onChange={handleNewRoomInputChange}
+                  placeholder="Digite a localização"
+                  required
+                />
+              </FormGroup>
+              
+              <FormActions>
+                <ActionButton type="button" onClick={() => setView('list')}>
+                  <ArrowLeft size={16} /> Voltar
+                </ActionButton>
+                <ActionButton $primary type="submit" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Clock size={16} /> Processando...
+                    </>
+                  ) : (
+                    <>
+                      <Check size={16} /> Adicionar Sala
                     </>
                   )}
                 </ActionButton>
