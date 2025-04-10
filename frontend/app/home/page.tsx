@@ -17,6 +17,31 @@ const Container = styled.div`
   color: #f2ddcc;
 `;
 
+export const AddRoomButton = styled.button`
+  width: 20px; /* Defina a largura do botão */
+  height: 20px; /* Defina a altura do botão */
+  padding: 0.2rem;
+  border-radius: 10%;
+  background-color:rgb(90, 37, 235);
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background-color: #1D4ED8;
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+`;
+
 const MainContent = styled.div`
   display: flex;
   flex-direction: column;
@@ -32,14 +57,13 @@ const MainContent = styled.div`
 `;
 
 const Header = styled.div`
-  padding: 1.5rem;
+  padding: 0.5rem;
   text-align: center;
   font-weight: bold;
   font-size: 1.5rem;
   background: linear-gradient(90deg, #3182ce, #7c3aed);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  margin-bottom: 1rem;
 `;
 
 const RoomListContainer = styled.div`
@@ -259,6 +283,7 @@ interface ReservationFormData {
   name: string;
   startTime: string;
   endTime: string;
+  timeZone?: string; // Adicionando a propriedade timeZone
 }
 
 export default function StudyRoomScheduler() {
@@ -280,7 +305,7 @@ export default function StudyRoomScheduler() {
 
   useEffect(() => {
     const token = localStorage.getItem("jwt");
-
+    setIsAuthenticated(true); //REMOVER
     if (token) {
       try {
         // Decodificar o payload do JWT
@@ -345,20 +370,26 @@ export default function StudyRoomScheduler() {
   };
 
   const handleBookRoom = (room: Room) => {
+    if (!room.available) return; // Evita seleção de salas indisponíveis
+  
     setSelectedRoom(room);
-    
+  
     const now = new Date();
     const defaultStart = new Date(now.getTime() + 60 * 60 * 1000);
     const defaultEnd = new Date(defaultStart.getTime() + 60 * 60 * 1000);
-    
+  
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  
     setFormData({
       name: '',
       startTime: defaultStart.toISOString().slice(0, 16),
       endTime: defaultEnd.toISOString().slice(0, 16),
+      timeZone: userTimeZone,
     });
-    
+  
     setView('form');
   };
+  
 
   //Adicionar Sala
   const handleAddRoom = async (e: React.FormEvent) => {
@@ -422,35 +453,39 @@ export default function StudyRoomScheduler() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRoom) return;
-    
+  
     setLoading(true);
-
+  
     try {
       if (!formData.name.trim()) throw new Error('Informe seu nome');
       if (!formData.startTime || !formData.endTime) throw new Error('Informe os horários');
-      
+  
       const start = new Date(formData.startTime);
       const end = new Date(formData.endTime);
+      const now = new Date();
+  
+      // Bloqueio de agendamento no passado
+      if (start <= now) throw new Error('Não é possível agendar para o passado');
       if (start >= end) throw new Error('Horário final deve ser após o inicial');
-
+  
       const reservation = {
         room_id: selectedRoom.id,
         user_name: formData.name,
         start_time: formData.startTime,
-        end_time: formData.endTime
+        end_time: formData.endTime,
       };
-
+  
       const response = await fetch('/reservations/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(reservation)
+        body: JSON.stringify(reservation),
       });
-
+  
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.detail || 'Erro ao reservar');
       }
-
+  
       await loadRooms();
       setFormData({ name: '', startTime: '', endTime: '' });
       setView('list');
@@ -479,18 +514,14 @@ export default function StudyRoomScheduler() {
   return (
     <Container>
       <MainContent>
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem' }}>
-      <Header>Salas de Estudo</Header>
-      {view === 'list' && isAuthenticated && ( // O botão só aparece se o token for válido
-        <ActionButton 
-          $primary 
-          onClick={() => setView('addRoom')}
-          style={{ padding: '0.5rem', borderRadius: '50%' }}
-        >
-          <Plus size={20} />
-        </ActionButton>
-      )}
-    </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Header>Salas de Estudo</Header>
+            {view === 'list' && isAuthenticated && (
+              <AddRoomButton onClick={() => setView('addRoom')}>
+                <Plus size={20} />
+              </AddRoomButton>
+            )}
+        </div>
 
         
         {view === 'list' ? (
@@ -511,13 +542,12 @@ export default function StudyRoomScheduler() {
                 </AvailabilityBadge>
                 <BookButton
                   $available={room.available}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleBookRoom(room);
-                  }}
+                  disabled={!room.available}
+                  onClick={() => handleBookRoom(room)}
                 >
-                  <Calendar size={16} /> Reservar
-                </BookButton>
+                  <Check size={16} />
+                  Reservar
+              </BookButton>
               </RoomCard>
             ))}
           </RoomListContainer>
