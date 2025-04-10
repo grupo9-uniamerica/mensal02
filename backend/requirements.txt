@@ -3,4 +3,4 @@ uvicorn
 mysql-connector-python
 pydantic
 python-dotenv
-jose
+python-jose

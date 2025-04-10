@@ -16,7 +16,7 @@ def create_tables():
                 name VARCHAR(100) NOT NULL,
                 capacity INT NOT NULL,
                 location VARCHAR(255) NOT NULL,
-                available BOOLEAN NOT NULL DEFAULT TRUE,  # <- Adicionei esta linha
+                available BOOLEAN NOT NULL DEFAULT TRUE, 
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -193,7 +193,7 @@ def get_all_rooms():
         cursor = conn.cursor(dictionary=True)
         cursor.execute("""
             SELECT id, name, capacity, location, 
-                   COALESCE(available, TRUE) as available,  # Garante que sempre retorne um valor
+                   COALESCE(available, TRUE) as available, 
                    COALESCE(created_at, NOW()) as created_at
             FROM rooms 
             ORDER BY name
