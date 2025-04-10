@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [username, setusername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter(); // Inicializa o roteamento
@@ -19,7 +19,7 @@ export default function LoginPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username, password }),
       });
 
       if (!response.ok) throw new Error("Credenciais inválidas");
@@ -49,8 +49,8 @@ export default function LoginPage() {
           <input
             type="text"
             placeholder="Digite seu nome de usuário"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={username}
+            onChange={(e) => setusername(e.target.value)}
             required
             style={styles.input}
           />

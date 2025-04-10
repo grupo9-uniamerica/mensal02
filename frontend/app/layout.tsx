@@ -30,7 +30,7 @@ export default function RootLayout({
         {children}
         {/* Footer */}
         <footer style={styles}>
-          Version 1.1
+          Version 1.2
         </footer>
       </body>
     </html>
