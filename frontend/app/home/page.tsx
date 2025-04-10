@@ -605,45 +605,49 @@ export default function StudyRoomScheduler() {
               {room.available ? 'Disponível' : 'Indisponível'}
             </AvailabilityBadge>
             
-            <div style={{ display: 'flex', gap: '10px' }}>
-              {/* Botão de reservar */}
-              <BookButton
-                $available={room.available}
-                disabled={!room.available}
-                onClick={() => handleBookRoom(room)}
-              >
-                <Check size={16} />
-                Reservar
-              </BookButton>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            {/* Botão de reservar */}
+            <BookButton
+              $available={room.available}
+              disabled={!room.available}
+              onClick={() => handleBookRoom(room)}
+              style={{
+                position: 'relative', // Garante que o botão não se sobreponha
+                zIndex: 2, // Prioriza o botão na hierarquia visual
+              }}
+            >
+              <Check size={16} />
+              Reservar
+            </BookButton>
 
-              {/* Botão de deletar */}
-              {
-                isAuthenticated && (
-                  <button
-                    onClick={() => handleDeleteRoom(room.id)} // Passa o ID da sala para a função
-                    style={{
-                      padding: '0.75rem',
-                      marginTop: '1rem',
-                      backgroundColor: '#ff4d4f', // Vermelho vibrante
-                      borderRadius: '8px',
-                      border: 'none',
-                      transition: 'all 0.3s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.5rem',
-                      height: '50px', // Altura
-                      width: '70px', // Largura
-                      cursor: 'pointer',
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#d9363e')} // Hover: muda a cor
-                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#ff4d4f')} // Sai do hover: restaura a cor
-                  >
-                    🗑
-                  </button>
-                )
-              }
-            </div>
+            {/* Botão de deletar */}
+            {isAuthenticated && (
+              <button
+                onClick={() => handleDeleteRoom(room.id)}
+                style={{
+                  padding: '0.75rem',
+                  marginTop: '1rem',
+                  backgroundColor: '#ff4d4f',
+                  borderRadius: '8px',
+                  border: 'none',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  height: '50px',
+                  width: '70px',
+                  cursor: 'pointer',
+                  position: 'relative', // Similar ao BookButton
+                  zIndex: 1, // Hierarquia abaixo para evitar conflitos
+                }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#d9363e')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#ff4d4f')}
+              >
+                🗑
+              </button>
+            )}
+          </div>
           </RoomCard>
         ))}
       </RoomListContainer>
