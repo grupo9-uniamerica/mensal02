@@ -275,6 +275,34 @@ export default function StudyRoomScheduler() {
     capacity: '',
     location: ''
   });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("jwt");
+
+    if (token) {
+      try {
+        // Decodificar o payload do JWT
+        const payload = JSON.parse(atob(token.split(".")[1]));
+
+        // Verificar a expiração do token
+        const isExpired = payload.exp * 1000 < Date.now();
+
+        if (!isExpired) {
+          setIsAuthenticated(true);
+        } else {
+          localStorage.removeItem("jwt"); // Remove token expirado
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        console.error("Erro ao validar JWT:", error);
+        localStorage.removeItem("jwt"); // Remove token inválido
+        setIsAuthenticated(false);
+      }
+    }
+  }, []);
+
+
 
   // Função para buscar as salas do endpoint
   const fetchRooms = async (): Promise<Room[]> => {
@@ -449,18 +477,19 @@ export default function StudyRoomScheduler() {
   return (
     <Container>
       <MainContent>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem' }}>
-          <Header>Salas de Estudo</Header>
-          {view === 'list' && (
-            <ActionButton 
-              $primary 
-              onClick={() => setView('addRoom')}
-              style={{ padding: '0.5rem', borderRadius: '50%' }}
-            >
-              <Plus size={20} />
-            </ActionButton>
-          )}
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem' }}>
+      <Header>Salas de Estudo</Header>
+      {view === 'list' && isAuthenticated && ( // O botão só aparece se o token for válido
+        <ActionButton 
+          $primary 
+          onClick={() => setView('addRoom')}
+          style={{ padding: '0.5rem', borderRadius: '50%' }}
+        >
+          <Plus size={20} />
+        </ActionButton>
+      )}
+    </div>
+
         
         {view === 'list' ? (
           <RoomListContainer>

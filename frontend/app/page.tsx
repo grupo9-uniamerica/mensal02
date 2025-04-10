@@ -2,12 +2,12 @@
 
 import dynamic from "next/dynamic";
 
-const Chatbot = dynamic(() => import("./chatbot"), { ssr: false });
+const home = dynamic(() => import("./home/page"), { ssr: false });
 
 export default function Page() {
   return (
     <div>
-      {<Chatbot />}
+      {<Home/>}
     </div>
   );
 }
