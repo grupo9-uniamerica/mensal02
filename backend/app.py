@@ -1,11 +1,15 @@
-from fastapi import FastAPI, HTTPException, Query  # Adicione Query aqui
+from fastapi import FastAPI, HTTPException, Query, Depends, Security # Adicione Query aqui
 from pydantic import BaseModel, validator  # Adicionei o validator aqui
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List
 from mysql.connector import Error
 from typing import Optional
-from database import get_db_connection
+from database import get_db_connection, get_user_by_username
 from fastapi.middleware.cors import CORSMiddleware
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+
 from models import (
     add_room, 
     add_reservation, 
@@ -28,6 +32,87 @@ app.add_middleware(
     allow_methods=["*"],  # Permite todos os métodos (GET, POST, etc.)
     allow_headers=["*"],  # Permite todos os headers
 )
+
+
+# Begin Login
+SECRET_KEY = "geladeiratsunami"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def verify_password(plain_password, password_hash):
+    """Verifica se a senha fornecida corresponde à senha hash armazenada."""
+    is_valid = pwd_context.verify(plain_password, password_hash)
+    return is_valid
+
+def get_password_hash(password):
+    """Gera um hash para a senha fornecida."""
+    return pwd_context.hash(password)
+
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    """Cria um token de acesso JWT."""
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+class User(BaseModel):
+    username: str
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    username: str | None = None
+
+def authenticate_user(username: str, password: str):
+    """Autentica o usuário verificando o nome de usuário e a senha."""
+    user = get_user_by_username(username)
+    if not user or not verify_password(password, user["password_hash"]):
+        return False
+    return user
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+def authenticate_user(username: str, password: str):
+    """Autentica o usuário verificando o nome de usuário e a senha."""
+    user = get_user_by_username(username)
+    if not user or not verify_password(password, user["password_hash"]):
+        return False
+    return user
+
+@app.post("/token", response_model=Token)
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = authenticate_user(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code = 401,
+            detail = "Usuário ou senha inválidos",
+            headers = {"WWW-Authenticate": "Bearer"},
+        )
+    access_token = create_access_token(data={"sub": user["username"]})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise HTTPException(status_code=401, detail="Token inválido")
+        return username
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token inválido")
+    
+
+# End Login
 
 
 # Modelos para Salas
@@ -80,7 +165,7 @@ class ReservationResponse(BaseModel):
 
 # Endpoints
 @app.post("/rooms/", response_model=RoomResponse)
-def create_room(room: Room):
+def create_room(room: Room, current_user: str = Depends(get_current_user)):
     try:
         room_id = add_room(
             name=room.name,
