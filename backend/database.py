@@ -5,11 +5,9 @@ def get_db_connection():
     """Função que retorna uma conexão com o banco de dados MySQL."""
     try:
         conn = mysql.connector.connect(
-            #host='10.0.0.5',
-            host='127.0.0.1',
+            host='10.0.0.5',
             user='root',
-            #password='kappa110520',
-            password ='root',
+            password='kappa110520',
             database='salasdb',
             port=3306,
             auth_plugin='mysql_native_password'  # Adicione esta linha
