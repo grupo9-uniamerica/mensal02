@@ -198,7 +198,7 @@ def list_rooms():
         raise HTTPException(status_code=500, detail=str(e))
     
 @app.delete("/rooms/{room_id}", response_model=dict)
-def delete_room(room_id: int, current_user: str = Depends(get_current_user)):
+def excluir_sala(room_id: int, current_user: str = Depends(get_current_user)):
     """Deleta uma sala pelo ID."""
     try:
         deleted = delete_room(room_id)  # Supondo que você tenha uma função para remover do banco

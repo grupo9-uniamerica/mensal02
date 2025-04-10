@@ -397,6 +397,8 @@ export default function StudyRoomScheduler() {
       setLoading(false);
     }
   }, [fetchRooms]);
+
+  
   
   useEffect(() => {
     loadRooms();
@@ -488,30 +490,30 @@ export default function StudyRoomScheduler() {
     }
   };  
 
-  const handleDeleteRoom = async (roomId: number) => {
-    try {
-      const token = localStorage.getItem("jwt");
-      if (!token) throw new Error("Usuário não autenticado!");
-  
-      const response = await fetch(`/rooms/${roomId}`, {
-        method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-  
-      if (!response.ok) {
-        throw new Error("Erro ao deletar a sala");
+    const handleDeleteRoom = async (roomId: number) => {
+      try {
+        const token = localStorage.getItem("jwt");
+        if (!token) throw new Error("Usuário não autenticado!");
+    
+        const response = await fetch(`/rooms/${roomId}`, {
+          method: "DELETE",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+    
+        if (!response.ok) {
+          throw new Error("Erro ao deletar a sala");
+        }
+    
+        alert(`Sala com ID ${roomId} deletada com sucesso!`);
+        await loadRooms(); // Atualiza a lista de salas
+      } catch (error) {
+        console.error("Erro ao deletar sala:", error);
+        alert(error instanceof Error ? error.message : "Erro desconhecido");
       }
-  
-      alert(`Sala com ID ${roomId} deletada com sucesso!`);
-      await loadRooms(); // Atualiza a lista de salas
-    } catch (error) {
-      console.error("Erro ao deletar sala:", error);
-      alert(error instanceof Error ? error.message : "Erro desconhecido");
-    }
-  };
+    };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -615,27 +617,32 @@ export default function StudyRoomScheduler() {
               </BookButton>
 
               {/* Botão de deletar */}
-              <button
-              onClick={() => handleDeleteRoom(room.id)}
-              style={{
-                padding: '0.75rem',
-                marginTop: '1rem',
-                backgroundColor: '#ff4d4f', // vermelho vibrante
-                borderRadius: '8px',
-                border: 'none',
-                transition: 'all 0.3s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                height: '50px', // altura pré-definida
-                width: '70px', // largura pré-definida
-              }}
-              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#d9363e')}
-              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#ff4d4f')}
-            >
-              🗑
-            </button>
+              {
+                isAuthenticated && (
+                  <button
+                    onClick={() => handleDeleteRoom(room.id)} // Passa o ID da sala para a função
+                    style={{
+                      padding: '0.75rem',
+                      marginTop: '1rem',
+                      backgroundColor: '#ff4d4f', // Vermelho vibrante
+                      borderRadius: '8px',
+                      border: 'none',
+                      transition: 'all 0.3s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      height: '50px', // Altura
+                      width: '70px', // Largura
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#d9363e')} // Hover: muda a cor
+                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#ff4d4f')} // Sai do hover: restaura a cor
+                  >
+                    🗑
+                  </button>
+                )
+              }
             </div>
           </RoomCard>
         ))}
