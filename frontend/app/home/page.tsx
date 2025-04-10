@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import styled from "styled-components";
-import { Calendar, Clock, User, ArrowLeft, Check, Plus } from "lucide-react";
+import { Clock, User, ArrowLeft, Check, Plus } from "lucide-react";
 import { useCallback } from "react";
 
 // Estilos baseados no exemplo fornecido
@@ -17,12 +17,12 @@ const Container = styled.div`
   color: #f2ddcc;
 `;
 
-export const AddRoomButton = styled.button`
-  width: 20px; /* Defina a largura do botão */
-  height: 20px; /* Defina a altura do botão */
+const AddRoomButton = styled.button`
+  width: 20px;
+  height: 20px;
   padding: 0.2rem;
   border-radius: 10%;
-  background-color:rgb(90, 37, 235);
+  background-color: rgb(90, 37, 235);
   color: #fff;
   border: none;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -302,7 +302,7 @@ export default function StudyRoomScheduler() {
     location: ''
   });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
+  
   useEffect(() => {
     const token = localStorage.getItem("jwt");
     if (token) {
