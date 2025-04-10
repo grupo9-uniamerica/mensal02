@@ -29,7 +29,7 @@ export default function RootLayout({
       >
         {children}
         {/* Footer */}
-        <footer style={styles.footer}>
+        <footer style={styles}>
           Version 1.0
         </footer>
       </body>
@@ -37,12 +37,11 @@ export default function RootLayout({
   );
 }
 
-const styles = {
-  footer: {
-    position: "fixed",
-    bottom: "10px",
-    right: "10px",
-    fontSize: "12px",
-    color: "#333",
-  },
+const styles: React.CSSProperties = {
+  position: "fixed",
+  bottom: "10px",
+  right: "10px",
+  fontSize: "12px",
+  color: "#333",
 };
+
