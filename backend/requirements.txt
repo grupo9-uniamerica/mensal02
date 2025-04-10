@@ -4,3 +4,4 @@ mysql-connector-python
 pydantic
 python-dotenv
 python-jose
+passlib
