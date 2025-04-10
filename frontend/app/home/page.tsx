@@ -371,8 +371,9 @@ export default function StudyRoomScheduler() {
       setLoading(false);
     }
   }, [fetchRooms]);
-  // ------------- fim mock
   */
+  // ------------- fim mock
+
   
   // Função para buscar as salas do endpoint
   const fetchRooms = useCallback(async (): Promise<Room[]> => {
@@ -594,7 +595,6 @@ export default function StudyRoomScheduler() {
           <RoomCard
             key={room.id}
             $available={room.available}
-            onClick={() => handleBookRoom(room)}
           >
             <RoomImage>{room.name.charAt(0)}</RoomImage>
             <RoomTitle>{room.name}</RoomTitle>
