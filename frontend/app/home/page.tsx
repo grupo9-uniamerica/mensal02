@@ -396,58 +396,52 @@ export default function StudyRoomScheduler() {
     setLoading(true);
   
     try {
+      const token = localStorage.getItem("jwt"); // Obtém o token armazenado
+      if (!token) throw new Error("Usuário não autenticado!");
+  
       // Validações básicas
-      if (!newRoomData.name.trim()) throw new Error('Informe o nome da sala');
-      if (!newRoomData.capacity || isNaN(Number(newRoomData.capacity))) throw new Error('Capacidade inválida');
-      if (!newRoomData.location.trim()) throw new Error('Informe a localização');
+      if (!newRoomData.name.trim()) throw new Error("Informe o nome da sala");
+      if (!newRoomData.capacity || isNaN(Number(newRoomData.capacity))) throw new Error("Capacidade inválida");
+      if (!newRoomData.location.trim()) throw new Error("Informe a localização");
   
       const room = {
         name: newRoomData.name,
         capacity: parseInt(newRoomData.capacity),
         location: newRoomData.location,
-        available: true
+        available: true,
       };
   
-      // Envia para o backend
-      const response = await fetch('/rooms/', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json' // Garante que esperamos JSON na resposta
+      // Envia para o backend com o token
+      const response = await fetch("/rooms/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Authorization": `Bearer ${token}`, // Passando o token no cabeçalho
         },
-        body: JSON.stringify(room)
+        body: JSON.stringify(room),
       });
   
-      const responseData = await response.text(); // Primeiro lemos como texto
-      
-      // Tentamos parsear apenas se a resposta não estiver vazia
+      const responseData = await response.text();
       const data = responseData ? JSON.parse(responseData) : null;
   
       if (!response.ok) {
-        throw new Error(data?.message || data?.detail || 'Erro ao adicionar sala');
+        throw new Error(data?.message || data?.detail || "Erro ao adicionar sala");
       }
   
       // Atualiza a lista de salas
       await loadRooms();
-      
-      // Limpa e volta para a lista
-      setNewRoomData({ name: '', capacity: '', location: '' });
-      setView('list');
-      
-      alert('Sala adicionada com sucesso!');
+  
+      alert("Sala adicionada com sucesso!");
+      setNewRoomData({ name: "", capacity: "", location: "" });
+      setView("list");
     } catch (error) {
-      console.error('Erro ao adicionar sala:', error);
-      
-      // Mensagem mais amigável para erros de JSON
-      if (error instanceof SyntaxError) {
-        alert('Resposta inválida do servidor. Por favor, tente novamente.');
-      } else {
-        alert(error instanceof Error ? error.message : 'Erro desconhecido');
-      }
+      console.error("Erro ao adicionar sala:", error);
+      alert(error instanceof Error ? error.message : "Erro desconhecido");
     } finally {
       setLoading(false);
     }
-  };
+  };  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
