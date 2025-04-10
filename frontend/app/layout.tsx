@@ -28,7 +28,21 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        {/* Footer */}
+        <footer style={styles.footer}>
+          Version 1.0
+        </footer>
       </body>
     </html>
   );
 }
+
+const styles = {
+  footer: {
+    position: "fixed",
+    bottom: "10px",
+    right: "10px",
+    fontSize: "12px",
+    color: "#333",
+  },
+};
