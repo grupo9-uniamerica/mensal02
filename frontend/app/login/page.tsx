@@ -12,7 +12,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-  
+
     try {
       const response = await fetch("/token", {
         method: "POST",
@@ -21,15 +21,22 @@ export default function LoginPage() {
         },
         body: JSON.stringify({ email, password }),
       });
-  
+
       if (!response.ok) throw new Error("Credenciais inválidas");
-  
+
       const data = await response.json();
       localStorage.setItem("jwt", data.token); // Armazena o token
       alert("Login realizado com sucesso!");
       router.push("/home");
-    } catch (error) {
-      setError("Erro ao fazer login. Tente novamente.");
+    } catch (err) {
+      console.error("Erro ao fazer login:", err);
+
+      // Verifica se err é uma instância de Error
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Erro ao fazer login. Tente novamente.");
+      }
     }
   };
 
@@ -39,7 +46,7 @@ export default function LoginPage() {
         <h2 style={styles.title}>Login</h2>
         {error && <p style={styles.error}>{error}</p>}
         <form onSubmit={handleSubmit} style={styles.form}>
-        <input
+          <input
             type="text"
             placeholder="Digite seu nome de usuário"
             value={email}
@@ -69,29 +76,29 @@ const styles = {
     alignItems: "center",
     height: "100vh",
     background: "linear-gradient(45deg, #6a11cb, #2575fc)",
-    color: "black", // Define a cor padrão da fonte como preta
-  },
+    color: "black",
+  } as React.CSSProperties, // Define tipagem correta
   loginBox: {
     background: "white",
     padding: "30px",
     borderRadius: "10px",
     boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
-    textAlign: "center",
+    textAlign: "center" as const, // Corrige tipagem
     width: "300px",
-    color: "black", // Cor do texto dentro do login box
-  },
+    color: "black",
+  } as React.CSSProperties,
   title: {
     marginBottom: "20px",
-    color: "black", // Garante que o título também fique preto
-  },
+    color: "black",
+  } as React.CSSProperties,
   error: {
     color: "red",
     marginBottom: "10px",
-  },
+  } as React.CSSProperties,
   form: {
     display: "flex",
     flexDirection: "column",
-  },
+  } as React.CSSProperties,
   input: {
     width: "100%",
     padding: "10px",
@@ -99,8 +106,8 @@ const styles = {
     border: "1px solid #ccc",
     borderRadius: "5px",
     fontSize: "16px",
-    color: "black", // Mantém a cor preta dentro dos inputs
-  },
+    color: "black",
+  } as React.CSSProperties,
   button: {
     width: "100%",
     padding: "10px",
@@ -111,5 +118,5 @@ const styles = {
     cursor: "pointer",
     fontSize: "16px",
     marginTop: "10px",
-  },
+  } as React.CSSProperties,
 };

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import styled from "styled-components";
 import { Calendar, Clock, User, ArrowLeft, Check, Plus } from "lucide-react";
+import { useCallback } from "react";
 
 // Estilos baseados no exemplo fornecido
 const Container = styled.div`
@@ -305,32 +306,33 @@ export default function StudyRoomScheduler() {
 
 
   // Função para buscar as salas do endpoint
-  const fetchRooms = async (): Promise<Room[]> => {
+  const fetchRooms = useCallback(async (): Promise<Room[]> => {
     try {
-      const response = await fetch('/rooms/');
-      if (!response.ok) throw new Error('Erro ao buscar salas');
+      const response = await fetch("/rooms/");
+      if (!response.ok) throw new Error("Erro ao buscar salas");
       return await response.json();
     } catch (error) {
-      console.error('Erro ao buscar salas:', error);
+      console.error("Erro ao buscar salas:", error);
       return [];
     }
-  };
+  }, []);  
 
-  const loadRooms = async () => {
+  const loadRooms = useCallback(async () => {
     setLoading(true);
     try {
       const fetchedRooms = await fetchRooms();
       setRooms(fetchedRooms);
     } catch (error) {
-      console.error('Erro ao carregar salas:', error);
+      console.error("Erro ao carregar salas:", error);
     } finally {
       setLoading(false);
     }
-  };
-
+  }, [fetchRooms]);
+  
   useEffect(() => {
     loadRooms();
-  }, []);
+  }, [loadRooms]); // Agora a dependência está incluída corretamente
+  
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
