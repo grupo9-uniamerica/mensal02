@@ -13,14 +13,19 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
+    const formData = new URLSearchParams();
+    formData.append("username", username);
+    formData.append("password", password);
+
+
     try {
       const response = await fetch("/token", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: JSON.stringify({ username, password }),
-      });
+        body: formData,
+      });      
 
       if (!response.ok) throw new Error("Credenciais inválidas");
 

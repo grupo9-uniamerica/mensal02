@@ -73,20 +73,12 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     username: str | None = None
 
-def authenticate_user(username: str, password: str):
-    """Autentica o usuário verificando o nome de usuário e a senha."""
-    user = get_user_by_username(username)
-    if not user or not verify_password(password, user["password_hash"]):
-        return False
-    return user
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def authenticate_user(username: str, password: str):
-    """Autentica o usuário verificando o nome de usuário e a senha."""
     user = get_user_by_username(username)
     if not user or not verify_password(password, user["password_hash"]):
-        return False
+        return None  # Melhor que False
     return user
 
 @app.post("/token", response_model=Token)
