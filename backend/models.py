@@ -94,6 +94,33 @@ def add_room(name, capacity, location, available=True):  # Adicione o parâmetro
             cursor.close()
             conn.close()
 
+def delete_room(room_id: int):
+    """Deleta uma sala pelo ID."""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Executa a exclusão da sala pelo ID
+        cursor.execute("DELETE FROM rooms WHERE id = %s", (room_id,))
+        conn.commit()
+
+        # Verifica se alguma linha foi afetada
+        if cursor.rowcount == 0:
+            raise ValueError(f"Sala com ID {room_id} não encontrada")
+
+        return {"message": f"Sala com ID {room_id} deletada com sucesso"}
+
+    except mysql.connector.Error as err:
+        if conn:
+            conn.rollback()
+        raise ValueError(f"Erro ao deletar sala: {err}")
+
+    finally:
+        if conn and conn.is_connected():
+            cursor.close()
+            conn.close()
+
 def check_availability(room_id, start_time, end_time):
     """Verifica se a sala está disponível no período"""
     if start_time >= end_time:

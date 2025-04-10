@@ -12,6 +12,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from models import (
     add_room, 
+    delete_room,
     add_reservation, 
     get_all_reservations, 
     get_all_rooms,
@@ -195,6 +196,18 @@ def list_rooms():
         return rooms_with_availability
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.delete("/rooms/{room_id}", response_model=dict)
+def delete_room(room_id: int, current_user: str = Depends(get_current_user)):
+    """Deleta uma sala pelo ID."""
+    try:
+        deleted = delete_room(room_id)  # Supondo que você tenha uma função para remover do banco
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Sala não encontrada")
+        return {"message": "Sala deletada com sucesso"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/reservations/check")
 async def check_availability(

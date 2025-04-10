@@ -443,6 +443,31 @@ export default function StudyRoomScheduler() {
     }
   };  
 
+  const handleDeleteRoom = async (roomId: number) => {
+    try {
+      const token = localStorage.getItem("jwt");
+      if (!token) throw new Error("Usuário não autenticado!");
+  
+      const response = await fetch(`/rooms/${roomId}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error("Erro ao deletar a sala");
+      }
+  
+      alert(`Sala com ID ${roomId} deletada com sucesso!`);
+      await loadRooms(); // Atualiza a lista de salas
+    } catch (error) {
+      console.error("Erro ao deletar sala:", error);
+      alert(error instanceof Error ? error.message : "Erro desconhecido");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRoom) return;
@@ -506,44 +531,61 @@ export default function StudyRoomScheduler() {
 
   return (
     <Container>
-      <MainContent>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Header>Salas de Estudo</Header>
-            {view === 'list' && isAuthenticated && (
-              <AddRoomButton onClick={() => setView('addRoom')}>
-                <Plus size={20} />
-              </AddRoomButton>
-            )}
-        </div>
+  <MainContent>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Header>Salas de Estudo</Header>
+      {view === 'list' && isAuthenticated && (
+        <AddRoomButton onClick={() => setView('addRoom')}>
+          <Plus size={20} />
+        </AddRoomButton>
+      )}
+    </div>
 
-        
-        {view === 'list' ? (
-          <RoomListContainer>
-            {rooms.map(room => (
-              <RoomCard
-                key={room.id}
+    {view === 'list' ? (
+      <RoomListContainer>
+        {rooms.map(room => (
+          <RoomCard
+            key={room.id}
+            $available={room.available}
+            onClick={() => handleBookRoom(room)}
+          >
+            <RoomImage>{room.name.charAt(0)}</RoomImage>
+            <RoomTitle>{room.name}</RoomTitle>
+            <RoomMeta>
+              <User size={16} /> {room.capacity} pessoas
+            </RoomMeta>
+            <AvailabilityBadge $available={room.available}>
+              {room.available ? 'Disponível' : 'Indisponível'}
+            </AvailabilityBadge>
+            
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {/* Botão de reservar */}
+              <BookButton
                 $available={room.available}
+                disabled={!room.available}
                 onClick={() => handleBookRoom(room)}
               >
-                <RoomImage>{room.name.charAt(0)}</RoomImage>
-                <RoomTitle>{room.name}</RoomTitle>
-                <RoomMeta>
-                  <User size={16} /> {room.capacity} pessoas
-                </RoomMeta>
-                <AvailabilityBadge $available={room.available}>
-                  {room.available ? 'Disponível' : 'Indisponível'}
-                </AvailabilityBadge>
-                <BookButton
-                  $available={room.available}
-                  disabled={!room.available}
-                  onClick={() => handleBookRoom(room)}
-                >
-                  <Check size={16} />
-                  Reservar
+                <Check size={16} />
+                Reservar
               </BookButton>
-              </RoomCard>
-            ))}
-          </RoomListContainer>
+
+              {/* Botão de deletar */}
+              <button
+                onClick={() => handleDeleteRoom(room.id)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'red'
+                }}
+              >
+                🗑
+              </button>
+            </div>
+          </RoomCard>
+        ))}
+      </RoomListContainer>
+
         ) : view === 'form' ? (
           <FormContainer>
             <FormHeader>
