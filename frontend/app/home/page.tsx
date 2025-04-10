@@ -305,7 +305,6 @@ export default function StudyRoomScheduler() {
 
   useEffect(() => {
     const token = localStorage.getItem("jwt");
-    setIsAuthenticated(true); //REMOVER
     if (token) {
       try {
         // Decodificar o payload do JWT
