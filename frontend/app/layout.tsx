@@ -30,7 +30,7 @@ export default function RootLayout({
         {children}
         {/* Footer */}
         <footer style={styles}>
-          Version 1.0
+          Version 1.1
         </footer>
       </body>
     </html>
@@ -42,6 +42,6 @@ const styles: React.CSSProperties = {
   bottom: "10px",
   right: "10px",
   fontSize: "12px",
-  color: "#333",
+  color: "#fff", // Mudança para branco
 };
 
