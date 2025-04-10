@@ -328,7 +328,52 @@ export default function StudyRoomScheduler() {
   }, []);
 
 
+  // INICIO ---------------------  MOCK ROMS
+  /*
+  const mockRooms: Room[] = [
+    {
+      id: 1,
+      name: "Sala Alpha",
+      capacity: 10,
+      location: "Prédio A, 1º andar",
+      available: true,
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 2,
+      name: "Sala Beta",
+      capacity: 20,
+      location: "Prédio B, 2º andar",
+      available: false,
+      created_at: new Date().toISOString(),
+    },
+  ];
 
+  // Substituindo a função para buscar salas com o mock
+  const fetchRooms = useCallback(async (): Promise<Room[]> => {
+    try {
+      // Simulando chamada ao backend com o mock
+      return mockRooms;
+    } catch (error) {
+      console.error("Erro ao buscar salas:", error);
+      return [];
+    }
+  }, []);
+  
+  const loadRooms = useCallback(async () => {
+    setLoading(true);
+    try {
+      const fetchedRooms = await fetchRooms();
+      setRooms(fetchedRooms);
+    } catch (error) {
+      console.error("Erro ao carregar salas:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchRooms]);
+  // ------------- fim mock
+  */
+  
   // Função para buscar as salas do endpoint
   const fetchRooms = useCallback(async (): Promise<Room[]> => {
     try {
@@ -571,16 +616,26 @@ export default function StudyRoomScheduler() {
 
               {/* Botão de deletar */}
               <button
-                onClick={() => handleDeleteRoom(room.id)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: 'red'
-                }}
-              >
-                🗑
-              </button>
+              onClick={() => handleDeleteRoom(room.id)}
+              style={{
+                padding: '0.75rem',
+                marginTop: '1rem',
+                backgroundColor: '#ff4d4f', // vermelho vibrante
+                borderRadius: '8px',
+                border: 'none',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                height: '50px', // altura pré-definida
+                width: '70px', // largura pré-definida
+              }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#d9363e')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#ff4d4f')}
+            >
+              🗑
+            </button>
             </div>
           </RoomCard>
         ))}
