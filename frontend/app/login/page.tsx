@@ -30,7 +30,7 @@ export default function LoginPage() {
       if (!response.ok) throw new Error("Credenciais inválidas");
 
       const data = await response.json();
-      localStorage.setItem("jwt", data.token); // Armazena o token
+      localStorage.setItem("jwt", data.access_token); // Armazena o token
       alert("Login realizado com sucesso!");
       router.push("/home");
     } catch (err) {
