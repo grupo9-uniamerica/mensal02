@@ -721,7 +721,7 @@ export default function StudyRoomScheduler() {
               <ActionButton onClick={() => setView('list')}>
                 <ArrowLeft size={18} />
               </ActionButton>
-              <FormTitle>Adicionar Sala de Estudo</FormTitle>
+              <FormTitle>Adicionar Sala de Estudo v1</FormTitle>
             </FormHeader>
             
             <form onSubmit={handleAddRoom}>
